@@ -186,7 +186,7 @@ ClusterDef2 <-function(Data,km){
     switch(as.character(data[i,8]),
            "1" =  {
              cat("level 1.")
-             KM1<<-(Data.AnAP2$cluster==i)  #函数内部强赋值
+             KM1<-(Data.AnAP2$cluster==i)  #函数内部强赋值
              data.KM1<<-Data.AnAP2[KM1,]
              writeLines("")
              cat("总计：",nrow(data.KM1),"条")
@@ -194,7 +194,7 @@ ClusterDef2 <-function(Data,km){
            
            "2" =  {
              cat("level 2.")
-             KM2<<-(Data.AnAP2$cluster==i)
+             KM2<-(Data.AnAP2$cluster==i)
              data.KM2<<-Data.AnAP2[KM2,]
              writeLines("")
              cat("总计：",nrow(data.KM2),"条")
@@ -202,7 +202,7 @@ ClusterDef2 <-function(Data,km){
            
            "3" =  {
              cat("level 3.")
-             KM3<<-(Data.AnAP2$cluster==i)
+             KM3<-(Data.AnAP2$cluster==i)
              data.KM3<<-Data.AnAP2[KM3,]
              writeLines("")
              cat("总计：",nrow(data.KM3),"条")
@@ -210,7 +210,7 @@ ClusterDef2 <-function(Data,km){
            
            "4" =  {
              cat("level 4.")
-             KM4<<-(Data.AnAP2$cluster==i)
+             KM4<-(Data.AnAP2$cluster==i)
              data.KM4<<-Data.AnAP2[KM4,]
              writeLines("")
              cat("总计：",nrow(data.KM4),"条")
@@ -218,7 +218,7 @@ ClusterDef2 <-function(Data,km){
            
            "5" =  {
              cat("level 5.")
-             KM5<<-(Data.AnAP2$cluster==i)
+             KM5<-(Data.AnAP2$cluster==i)
              data.KM5<<-Data.AnAP2[KM5,]
              writeLines("")
              cat("总计：",nrow(data.KM5),"条")
@@ -273,14 +273,38 @@ p<-p+geom_point(data=centers2, aes(x=UpCorrecteRate, y=DownCorrecteRate,color='b
 p
 
 ############PCA#############
-pca<-prcomp(Data.AnA2,scale=TRUE,tol=.85)
+pca<-prcomp(Data.AnAP2[,1:7],scale=TRUE)#,tol=.0
 summary(pca)
-biplot(pca)
+#####how much each of your original####
+#dimensions contributes to the first component.
+sort(pca$rotation[,"PC1"])
+sort(pca$rotation[,"PC2"])
+sort(pca$rotation[,"PC3"])
+sort(pca$rotation[,"PC4"])
+sort(pca$rotation[,"PC5"])
+sort(pca$rotation[,"PC6"])
+
+pca$loadings
 pca$sdev
 pca$center
-plot(prcomp(Data.AnA2))
-summary(prcomp(Data.AnA2, scale = TRUE))
-biplot(prcomp(Data.AnA2, scale = TRUE))
+biplot(pca)
+plot(pca,main="how many PCs are worthy.")
+plot(pca$x)
+pca$sd
+pairs(pca$x,col=Data.AnAP2[,8],main="Principal Component Analysis")
+#plot(1:10000,pca$rotation[,1],type="l")
+pca$rotation
+pload<-abs(pca$rotation)
+sweep(pload,2,colSums(pload),"/")#the proportional contribution to the each principal component
+##Princomp
+princom<-princomp(Data.AnA2,scale=TRUE)
+load<-with(princom,unclass(loadings))
+princom
+load
+plot(princom)
+aload<-abs(load)
+sweep(aload,2,colSums(aload),"/")# the proportional contribution to the each principal component
+
 
 #KM4
 # ############聚类############
