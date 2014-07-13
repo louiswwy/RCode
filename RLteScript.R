@@ -69,8 +69,10 @@ names(data.HTTP5)[names(data.HTTP5)=="LastAckTime"]="LastAckTime"
 Data.AnA<-data.HTTP5[data.HTTP4$DownerrorRate!='NaN'
                      ,c('upAvBand',  'downAvBand',	'UperrorRate','DownerrorRate','FirstRespondTime','LastPacketTime','LastAckTime')]
 
-Data.AnA$upAvBand   <-Data.AnA$upAvBand   /max(Data.AnA$upAvBand) 
-Data.AnA$downAvBand <-Data.AnA$downAvBand /max(Data.AnA$downAvBand) 
+# Data.AnA$upAvBand   <-Data.AnA$upAvBand   /max(Data.AnA$upAvBand) 
+# Data.AnA$downAvBand <-Data.AnA$downAvBand /max(Data.AnA$downAvBand) 
+Data.AnA$upAvBand   <-Data.AnA$upAvBand
+Data.AnA$downAvBand <-Data.AnA$downAvBand
 
 Data.AnA$UperrorRate   <-1-Data.AnA$UperrorRate
 Data.AnA$DownerrorRate <-1-Data.AnA$DownerrorRate
@@ -79,12 +81,36 @@ Data.AnA$FirstRespondTime   <-as.numeric(Data.AnA$FirstRespondTime)
 Data.AnA$LastPacketTime     <-as.numeric(Data.AnA$LastPacketTime)
 Data.AnA$LastAckTime        <-as.numeric(Data.AnA$LastAckTime)
 
-Data.AnA$FirstRespondTime   <-Data.AnA$FirstRespondTime/(max(Data.AnA$FirstRespondTime) )
-Data.AnA$LastPacketTime     <-Data.AnA$LastPacketTime  /(max(Data.AnA$LastPacketTime) )
-Data.AnA$LastAckTime        <-Data.AnA$LastAckTime     /(max(Data.AnA$LastAckTime) )
+# Data.AnA$FirstRespondTime   <-Data.AnA$FirstRespondTime/(max(Data.AnA$FirstRespondTime) )
+# Data.AnA$LastPacketTime     <-Data.AnA$LastPacketTime  /(max(Data.AnA$LastPacketTime) )
+# Data.AnA$LastAckTime        <-Data.AnA$LastAckTime     /(max(Data.AnA$LastAckTime) )
 ######改名#####
 names(Data.AnA)[names(Data.AnA)=="UperrorRate"]="UpCorrecteRate";
 names(Data.AnA)[names(Data.AnA)=="DownerrorRate"]="DownCorrecteRate";
+
+############PCA#############
+Data.AnAP2<-Data.AnA
+pca<-prcomp(Data.AnAP2,scale=TRUE,tol=0.65)#,tol=.0,,scale=TRUE
+summary(pca)
+plot(pca)
+#biplot(pca)
+barplot(pca$sdev/pca$sdev[1])
+pca$sdev
+head(pca$x)
+
+newDat<-predict(pca,Data.AnAP2)
+newdat<-pca$x[,1:2]
+
+plot.ts(pca$x)
+
+plot(pca,main="how many PCs are worthy.")
+plot(pca$x)
+
+pairs(pca$x,main="Principal Component Analysis")
+pca$rotation
+pload<-abs(pca$rotation)
+sweep(pload,2,colSums(pload),"/")#the proportional contribution to the each principal component
+
 
 ###########统计信息##########
 summary(Data.AnA$UpCorrecteRate)
@@ -116,6 +142,7 @@ mean(Data.AnA$downAvBand)
 mean(Data.AnA$FirstRespondTime)
 mean(Data.AnA$LastPacketTime)
 mean(Data.AnA$LastAckTime)
+
 
 # sd(Data.AnA$UpCorrecteRate)
 # sd(Data.AnA$DownCorrecteRate)
@@ -170,6 +197,7 @@ Data.AnA2<-Data.AnA
 
 ####可以使用的距离算法有"Hartigan-Wong", "Lloyd", "Forgy","MacQueen"四种
 ####   ,nstart=5, iter.max = 10
+PCAkm<-kmeans(newDat,5,nstart=25, iter.max = 10, algorithm = "Hartigan-Wong")
 km2<-kmeans(Data.AnA2,5,nstart=25, iter.max = 10, algorithm = "Hartigan-Wong")
 
 ClusterDef2 <-function(Data,km){  
@@ -271,39 +299,6 @@ p<-p+geom_point()
 p<-p+ xlim(0,1)+ylim(0,1)
 p<-p+geom_point(data=centers2, aes(x=UpCorrecteRate, y=DownCorrecteRate,color='black',size=5)) 
 p
-
-############PCA#############
-pca<-prcomp(Data.AnAP2[,1:7],scale=TRUE)#,tol=.0
-summary(pca)
-#####how much each of your original####
-#dimensions contributes to the first component.
-sort(pca$rotation[,"PC1"])
-sort(pca$rotation[,"PC2"])
-sort(pca$rotation[,"PC3"])
-sort(pca$rotation[,"PC4"])
-sort(pca$rotation[,"PC5"])
-sort(pca$rotation[,"PC6"])
-
-pca$loadings
-pca$sdev
-pca$center
-biplot(pca)
-plot(pca,main="how many PCs are worthy.")
-plot(pca$x)
-pca$sd
-pairs(pca$x,col=Data.AnAP2[,8],main="Principal Component Analysis")
-#plot(1:10000,pca$rotation[,1],type="l")
-pca$rotation
-pload<-abs(pca$rotation)
-sweep(pload,2,colSums(pload),"/")#the proportional contribution to the each principal component
-##Princomp
-princom<-princomp(Data.AnA2,scale=TRUE)
-load<-with(princom,unclass(loadings))
-princom
-load
-plot(princom)
-aload<-abs(load)
-sweep(aload,2,colSums(aload),"/")# the proportional contribution to the each principal component
 
 
 #KM4
