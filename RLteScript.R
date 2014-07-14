@@ -105,7 +105,7 @@ pca<-prcomp(Data.AnAP3,scale=TRUE)#,tol=.0,,scale=TRUE
 summary(pca)
 plot(pca)
 plot(pca, type='l')
-plot3d(pca$PC1,pca$PC2,pca$PC3)
+#plot3d(pca$PC1,pca$PC2,pca$PC3)
 #biplot(pca)
 barplot(pca$sdev/pca$sdev[1])
 pca$sdev
