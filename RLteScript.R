@@ -14,6 +14,10 @@ library("data.table", lib.loc="E:/Program Files/R/R-3.1.0/library")
 library("gpairs", lib.loc="E:/Program Files/R/R-3.1.0/library")
 
 library("plotrix", lib.loc="E:/Program Files/R/R-3.1.0/library")
+
+library("FactoMineR")
+
+library("rgl")
 ##############HTTP#######################
 data.DisHttp<-read.table("201406191100-ltehttpwap-sig13-11675500972.DAT"
                          ,header=TRUE,sep="|",fill=TRUE,colClasses="character",quote="",comment.char="")
@@ -89,21 +93,31 @@ names(Data.AnA)[names(Data.AnA)=="UperrorRate"]="UpCorrecteRate";
 names(Data.AnA)[names(Data.AnA)=="DownerrorRate"]="DownCorrecteRate";
 
 ############PCA#############
-Data.AnAP2<-Data.AnA
-pca<-prcomp(Data.AnAP2,scale=TRUE,tol=0.65)#,tol=.0,,scale=TRUE
+Data.AnAP3<-data.frame(scale(Data.AnA))
+
+# ppccaa<-PCA(Data.AnAP2,scale.unit=TRUE,graph=FALSE)
+# scores<-data.frame(ppccaa$ind$coord)
+# ggplot(scores,aes(Dim.1,Dim.2)) + geom_text(label=rownames(scores),colour="red") + geom_hline(yintercept=0) + geom_vline(xintercept=0) + labs(title="Score plot")
+
+
+# pca<-prcomp(Data.AnAP2,scale=FALSE)
+pca<-prcomp(Data.AnAP3,scale=TRUE)#,tol=.0,,scale=TRUE
 summary(pca)
 plot(pca)
+plot(pca, type='l')
+plot3d(pca$PC1,pca$PC2,pca$PC3)
 #biplot(pca)
 barplot(pca$sdev/pca$sdev[1])
 pca$sdev
+pca$x
 head(pca$x)
 
 newDat<-predict(pca,Data.AnAP2)
-newdat<-pca$x[,1:2]
+# newDat2<-predict(pca,Data.AnAP2)
+# newdat<-pca$x[,1:2]
 
-plot.ts(pca$x)
+# plot.ts(pca$x)
 
-plot(pca,main="how many PCs are worthy.")
 plot(pca$x)
 
 pairs(pca$x,main="Principal Component Analysis")
@@ -198,8 +212,12 @@ Data.AnA2<-Data.AnA
 ####可以使用的距离算法有"Hartigan-Wong", "Lloyd", "Forgy","MacQueen"四种
 ####   ,nstart=5, iter.max = 10
 PCAkm<-kmeans(newDat,5,nstart=25, iter.max = 10, algorithm = "Hartigan-Wong")
-km2<-kmeans(Data.AnA2,5,nstart=25, iter.max = 10, algorithm = "Hartigan-Wong")
+plot(newDat,col=PCAkm$cluster)
+plot(PCAkm$centers)
 
+
+km2<-kmeans(Data.AnA2,5,nstart=25, iter.max = 10, algorithm = "Hartigan-Wong")
+plot(Data.AnA2,col=km2$cluster)
 ClusterDef2 <-function(Data,km){  
   Data$cluster=factor(km$cluster)
   Data.AnAP2<<-Data
