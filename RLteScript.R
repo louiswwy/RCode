@@ -14,6 +14,9 @@ library("data.table")
 library("gpairs")
 
 library("plotrix")
+#######常用聚类算法#########
+library("pvclust")
+library("cluster")
 ########PCA###################
 #做PCA可以使用FactoMineR包中的PCA()。和自带的prcomp(),princomp()
 library("FactoMineR")
@@ -168,43 +171,28 @@ plot(result, type="o", xlab="Number of Cluster", ylab="Sum of Squer Error");
 ###########计算Silhouette Coefficient#######
 
 # 开始与结果边界
-CalculeSC<-function(date){
-  begin = 2; 
-  length = 3;
-  count = 2;
-  end = begin + length - 1;
-  # 结果容器
-  result = c();
-  result[begin:end] = -1;
-  # 遍历计算kmeans的SSE
-  library(cluster);
-  for(i in begin:end) {  
-    # Silhouette coefficient  
-    tmp = c();  
-    tmp[1:count] = 0;  
-    for(j in 1:count) {    
-      kcluster = pam(newDat, i);    
-      tmp[j] = kcluster$silinfo$avg.width;    
-    }  
-    result[i] = mean(tmp);  
-  }
-}
-#rm(i,j)
-
-# for(i in 2:4) {  
-#   # Silhouette coefficient  
-#   tmp = c();  
-#   tmp[1:5] = 0;  
-#   for(j in 1:5) {    
-#     kcluster = pam(newDat, i);    
-#     tmp[j] = kcluster$silinfo$avg.width;    
-#   }  
-#   result[i] = mean(tmp);  
+# CalculeSC<-function(date){
+# 
 # }
-
-
-
-CalculeSC(newDat)
+begin = 2; 
+length = 3;
+count = 2;
+end = begin + length - 1;
+# 结果容器
+result = c();
+result[begin:end] = -1;
+# 遍历计算kmeans的SSE
+for(i in begin:end) {  
+  # Silhouette coefficient  
+  tmp = c();  
+  tmp[1:count] = 0;  
+  for(j in 1:count) {    
+     kcluster = pam(newDat, 2);    #需要5.3G
+     tmp[j] = kcluster$silinfo$avg.width;    
+  }  
+  result[i] = mean(tmp);  
+}
+#CalculeSC(newDat)
 # 绘制结果
 plot(result, type="o", xlab="Number of Cluster", ylab="Silhouette Coefficient");
 
