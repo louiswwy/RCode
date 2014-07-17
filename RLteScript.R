@@ -132,6 +132,7 @@ pairs(pca$x,main="Principal Component Analysis")
 
 pca$rotation
 
+pload<-abs(pca$rotation)
 sweep(pload,2,colSums(pload),"/")#the proportional contribution to the each principal component
 
 ###########K值选择#############
@@ -188,18 +189,18 @@ CalculeSC<-function(date){
     result[i] = mean(tmp);  
   }
 }
-rm(i,j)
+#rm(i,j)
 
-for(i in 2:4) {  
-  # Silhouette coefficient  
-  tmp = c();  
-  tmp[1:5] = 0;  
-  for(j in 1:5) {    
-    kcluster = pam(newDat, i);    
-    tmp[j] = kcluster$silinfo$avg.width;    
-  }  
-  result[i] = mean(tmp);  
-}
+# for(i in 2:4) {  
+#   # Silhouette coefficient  
+#   tmp = c();  
+#   tmp[1:5] = 0;  
+#   for(j in 1:5) {    
+#     kcluster = pam(newDat, i);    
+#     tmp[j] = kcluster$silinfo$avg.width;    
+#   }  
+#   result[i] = mean(tmp);  
+# }
 
 
 
