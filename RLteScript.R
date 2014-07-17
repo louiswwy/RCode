@@ -81,7 +81,7 @@ data.HTTP5<-data.frame(data.HTTP5,LastPacketTime)
 
 LastAckTime<-(as.numeric(data.HTTP4$LastAckTime))
 data.HTTP5<-data.frame(data.HTTP5,LastAckTime)
-rm(FirstRespondTime、LastPacketTime、LastAckTime)
+rm(FirstRespondTime,LastPacketTime,LastAckTime)
 
 names(data.HTTP5)[names(data.HTTP5)=="FirstRespondTime.1"]="FirstRespondTime"
 names(data.HTTP5)[names(data.HTTP5)=="LastPacketTime"]="LastPacketTime"
@@ -142,65 +142,70 @@ sweep(pload,2,colSums(pload),"/")#the proportional contribution to the each prin
 #########计算不同K值的SSE#####
 CalculeSSE<-function(data){
   # K值的开始与结果边界
-  begin = 1; 
-  length = 15;
+  begin = 1
+  length = 15
   #重复次数
-  count = 50;
-  end = begin + length - 1;
+  count = 50
+  end = begin + length - 1
   # 结果容器
-  result <<- c();
-  result[begin:end] <<- 0;
+  resultSSE <<- c()
+  resultSSE[begin:end] <<- 0
   # 遍历计算kmeans的SSE
-  #qc = read.table("d:/question_cluster.txt", header=T);
   for(i in begin:end) {  
     # 计算SSE  
-    tmp = c();  
-    tmp[1:count] = 0;  
+    tmp = c()
+    tmp[1:count] = 0  
     for(j in 1:count) {    
-      kcluster = kmeans(data, i);    
-      tmp[j] = kcluster$tot.withinss;    
+      kcluster = kmeans(data, i)   
+      tmp[j] = kcluster$tot.withinss  
     }  
-    result[i] <<- mean(tmp);  
+    resultSSE[i] <<- mean(tmp)
   }
 }
 
 CalculeSSE(newDat)
 # 绘制结果
-plot(result, type="o", xlab="Number of Cluster", ylab="Sum of Squer Error");
+plot(resultSSE, type="o", xlab="Number of Cluster", ylab="Sum of Squer Error");
+rm(resultSSE)
 
 ###########计算Silhouette Coefficient#######
 
 # 开始与结果边界
-# CalculeSC<-function(date){
-# 
-# }
-begin = 2; 
-length = 3;
-count = 2;
-end = begin + length - 1;
-# 结果容器
-result = c();
-result[begin:end] = -1;
-# 遍历计算kmeans的SSE
-for(i in begin:end) {  
-  # Silhouette coefficient  
-  tmp = c();  
-  tmp[1:count] = 0;  
-  for(j in 1:count) {    
-     kcluster = pam(newDat, 2);    #需要5.3G
-     tmp[j] = kcluster$silinfo$avg.width;    
-  }  
-  result[i] = mean(tmp);  
+CalculeSC<-function(data){
+  begin = 2
+  length = 15
+  count = 50
+  end = begin + length - 1
+  # 结果容器
+  resultSC <<- c()
+  resultSC[begin:end]<<- -1
+  # 遍历计算kmeans的SSE
+  for(i in begin:end) {  
+    # Silhouette coefficient  
+    tmp = c()  
+    tmp[1:count] = 0  
+    for(j in 1:count) {    
+      kcluster = clara(newDat, i)    
+      tmp[j] = kcluster$silinfo$avg.width   #silinfo : a list with all silhouette information,   
+    }  
+    resultSC[i]  <<- mean(tmp)
+  }
 }
-#CalculeSC(newDat)
-# 绘制结果
-plot(result, type="o", xlab="Number of Cluster", ylab="Silhouette Coefficient");
 
+CalculeSC(newDat)
+# 绘制结果
+plot(resultSC, type="o", xlab="Number of Cluster", ylab="Silhouette Coefficient")
+#K=6时值最大，所以聚类效果最佳。
+rm(resultSC)
 
 ###########聚类############
-pkm<-kmeans(newDat,5,nstart=25,iter.max=10,algorithm="Hartigan-Wong")
+#bcl<-bootFlexclust(newDat, k=2:15, nboot=50, FUN=cclust, multicore=FALSE)
 
+pkm<-kmeans(newDat,6,nstart=25,iter.max=10,algorithm="Hartigan-Wong")
 plot(x=newDat[,2],y=newDat[,3],col=pkm$cluster,xlim=c(-5,10),ylim=c(-2,10)) #,xlim=c(-5,0.5),ylim=c(-5,5)
+
+kmC<-clara(newDat,6)
+plot(kmC)
 
 # ###########统计信息##########
 # summary(Data.AnA$UpCorrecteRate)
