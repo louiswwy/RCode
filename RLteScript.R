@@ -1,3 +1,14 @@
+###########run only once
+# install.packages("ggplot2")
+# install.packages("knitr")
+# install.packages("data.table")
+# install.packages("gpairs")
+# install.packages("plotrix")
+# install.packages("pvclust")
+# install.packages("cluster")
+# install.packages("FactoMineR")
+# install.packages("fpc")
+
 ########ggplot#####################
 library("ggplot2")
 ########SVM##################
