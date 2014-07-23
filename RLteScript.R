@@ -1,14 +1,14 @@
-########ggplot#####################
+########ggplot包#####################
 library("ggplot2")
-########SVM##################
+########SVM包##################
 #library("kernlab")
-###########贝叶斯#########
+###########贝叶斯包#########
 #library("bnlearn")
-########Stringr#############
+########Stringr包#############
 library("stringr")
-#########knitr##############
+#########knitr包##############
 library("knitr")
-#########data.table##########
+#########data.table包##########
 library("data.table")
 
 library("gpairs")
@@ -17,14 +17,12 @@ library("plotrix")
 #######常用聚类算法#########
 library("pvclust")
 library("cluster")
-########PCA###################
+########PCA包###################
 #做PCA可以使用FactoMineR包中的PCA()。和自带的prcomp(),princomp()
 library("FactoMineR")
 ########fpc包#################
 #fpc包中的pamk()
 library("fpc")
-
-
 
 ##############HTTP#######################
 data.DisHttp<-read.table("201406191100-ltehttpwap-sig13-11675500972.DAT"
@@ -116,29 +114,50 @@ Scoreplot<-PCA(Data.AnAP3,scale.unit=TRUE,graph=FALSE)
 scores<-data.frame(Scoreplot$ind$coord)
 ggplot(scores,aes(Dim.1,Dim.2)) + geom_text(label=rownames(scores),colour="red") + geom_hline(yintercept=0) + geom_vline(xintercept=0) + labs(title="Score plot")
 
-# pca<-prcomp(Data.AnAP2,scale=FALSE)
+
 pca<-prcomp(Data.AnAP3,scale=TRUE)#,tol=.0,,scale=TRUE
 summary(pca)
 plot(pca)
 plot(pca, type='l')
-biplot(pca,main="双标图")
 barplot(pca$sdev/pca$sdev[1])
+#biplot(pca,main="双标图")
+
+#相关矩阵
+dcor<-cor(Data.AnAP3)
+dcor
+#求相关矩阵的特征向量，特征值
+deig<-eigen(dcor)
+deig
+#输出特征值
+deig$values
+sumeigv<-sum(deig$values)
+sumeigv
+sum(deig$value[1:6])/sumeigv
+#前6个主成份的累计贡献率达到90.7%的
+
+#输出前六个主成分的荷载系数（特征向量）
+pca$loadings[,1:6]
+
 pca$sdev
 #pca$x
 head(pca$x)
 
-newDat<-predict(pca,Data.AnAP3)
+pca2<-prcomp(Data.AnAP3,scale=TRUE,tol=0.66)
+plot(pca2)
+
+newDat<-predict(pca2)
 # newDat2<-predict(pca,Data.AnAP2)
 # newdat<-pca$x[,1:2]
 
-pairs(pca$x,main="Principal Component Analysis")
+pairs(pca2$x,main="Principal Component Analysis")
 
-pca$rotation
+pca2$rotation
 
-pload<-abs(pca$rotation)
+pload<-abs(pca2$rotation)
 sweep(pload,2,colSums(pload),"/")#the proportional contribution to the each principal component
 
 ###########K值选择#############
+#通过计算轮廓系数（silhouette coefficient）方法结合了凝聚度和分离度，可以以此来判断聚类的优良性。其值在-1到+1之间取值，值越大表示聚类效果越好。
 #########计算不同K值的SSE#####
 CalculeSSE<-function(data){
   # K值的开始与结果边界
@@ -163,14 +182,14 @@ CalculeSSE<-function(data){
   }
 }
 
-CalculeSSE(newDat)
+system.time(CalculeSSE(newDat))
 # 绘制结果
 plot(resultSSE, type="o", xlab="Number of Cluster", ylab="Sum of Squer Error");
 rm(resultSSE)
 
 ###########计算Silhouette Coefficient#######
 
-# 开始与结果边界
+
 CalculeSC<-function(data){
   begin = 2
   length = 15
@@ -192,21 +211,85 @@ CalculeSC<-function(data){
   }
 }
 
-CalculeSC(newDat)
+system.time(CalculeSC(newDat))
 # 绘制结果
 plot(resultSC, type="o", xlab="Number of Cluster", ylab="Silhouette Coefficient")
-#K=6时值最大，所以聚类效果最佳。
+
+# K=5时值最大，所以聚类效果最佳。
+
 rm(resultSC)
 
 ###########聚类############
 #bcl<-bootFlexclust(newDat, k=2:15, nboot=50, FUN=cclust, multicore=FALSE)
+#######K-means############3
+pkm<-kmeans(newDat,5,nstart=25,iter.max=10,algorithm="Hartigan-Wong")
+plot(x=newDat[,2],y=newDat[,3],col=pkm$cluster,xlim=c(-5,10),ylim=c(-2,10),main="聚5类图",xlab="",ylab="") #,xlim=c(-5,0.5),ylim=c(-5,5)
+plot(newDat,col=pkm$cluster,xlab="",ylab="",xlim=c(-5,2),ylim=c(-3,6))
 
-pkm<-kmeans(newDat,6,nstart=25,iter.max=10,algorithm="Hartigan-Wong")
-plot(x=newDat[,2],y=newDat[,3],col=pkm$cluster,xlim=c(-5,10),ylim=c(-2,10)) #,xlim=c(-5,0.5),ylim=c(-5,5)
+###############CLARA (Clustering for Large Applications) algorithm###################
+# It works by clustering a sample from the dataset and then assigns all objects in the dataset to these clusters.
+#需要使用cluster包
+kmC<-clara(newDat,5)
+kmC$clusinfo
 
-kmC<-clara(newDat,6)
-plot(kmC)
+# Delerror<-(data.DisHttp$EndTime!='')
+# data.Http<-data.DisHttp[Delerror,]
 
+analyseData<-function(data,Clusting,PcaData,num){
+  #for(i in 1:num){
+    cluste<-Clusting$clustering==num
+    data.cluste<-PcaData[cluste,]    
+    a<-data.frame(row.names(data.cluste))
+    matchs<-row.names(data) %in% a[,1]
+    data.matchs<-data[matchs,]
+    return(data.matchs)
+  #}   
+}
+
+Clara1<-analyseData(Data.AnA,kmC,newDat,1)
+Clara2<-analyseData(Data.AnA,kmC,newDat,2)
+Clara3<-analyseData(Data.AnA,kmC,newDat,3)
+Clara4<-analyseData(Data.AnA,kmC,newDat,4)
+Clara5<-analyseData(Data.AnA,kmC,newDat,5)
+
+nrow(Clara1)
+nrow(Clara2)
+nrow(Clara3)
+nrow(Clara4)
+nrow(Clara5)
+
+StastiqueClara<-function(data,Clusting,PcaData,num){
+  data_mean<-c()
+  MEAN<-c() 
+  for(i in 1:num){
+    cluste<-Clusting$clustering==i
+    data_cluste<-PcaData[cluste,]    
+    a<-data.frame(row.names(data_cluste))
+    matchs<-row.names(data) %in% a[,1]
+    data_matchs<-data[matchs,]    
+    #cat(data_matchs[1,1])
+    #
+    for(b in 1:ncol(data_matchs)){
+      ColMean<-mean(data_matchs[,b])
+      data_mean<-cbind(data_mean,ColMean)
+    } 
+#     writeLines("")
+#     cat("MEAN",MEAN)
+#     writeLines("")
+#     cat("data_mean",data_mean)
+    MEAN<-rbind(MEAN,data_mean)
+    data_mean<-c()
+  }  
+  return(MEAN)
+}
+
+ClaraMean<-StastiqueClara(Data.AnA,kmC,newDat,5)
+names(ClaraMean)<-c('upAvBand','downAvBand','UpCorrecteRate','DownCorrecteRate' ,'FirstRespondTime','LastPacketTime','LastAckTime')
+plot(ClaraMean)#,col
+#matrix
+
+
+print(kmC)
 # ###########统计信息##########
 # summary(Data.AnA$UpCorrecteRate)
 # summary(Data.AnA$DownCorrecteRate)
