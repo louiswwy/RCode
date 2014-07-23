@@ -1,0 +1,17 @@
+http://www.r-bloggers.com/search/hadoop
+
+http://www.cnblogs.com/bigshuai/archive/2012/06/18/2553808.html
+
+http://blog.fens.me/hadoop-mahout-roadmap/  Mahout学习路线图
+
+##在ubuntu中安装RHadoop
+jdk6 使用bin文件安装。
+
+##为了解决java headers gen和java archive tool为空的情况需要运行以下代码
+ln -sf us/lib/jvm/java/jdk1.6.0_45/bin/javah /usr/bin/javah
+ln -sf usr/lib/jvm/java/jdk1.6.0_45/bin/javap /usr/bin/javap
+ln -sf usr/lib/jvm/java/jdk1.6.0_45/bin/jar /usr/bin/jar
+
+sudo R CMD　javareconf
+
+sudo R
