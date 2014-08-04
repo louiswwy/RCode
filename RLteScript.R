@@ -471,8 +471,6 @@ ToString<-function(data,seuil){
   for(x in 1:5){
     data[,x]<-as.numeric(data[,x])
     for(y in 1:nrow(data)){  
-      
-      #       cat(data[y,x],"\n")
       if(data[y,x]<=seuil[1,x]) {data[y,x]<-'1'}
       else if((seuil[1,x]<data[y,x]  && data[y,x]<=seuil[2,x]  && seuil[2,x]!=0)||  (seuil[1,x] <=data[y,x]&&seuil[2,x]==0))  {data[y,x]<-'2'}
       else if((seuil[2,x]<data[y,x]  && data[y,x]<=seuil[3,x]  && seuil[3,x]!=0)||  (seuil[2,x] <=data[y,x]&&seuil[3,x]==0))  {data[y,x]<-'3'}
@@ -498,10 +496,18 @@ ToString<-function(data,seuil){
 system.time(Data_AR<-ToString(data_PreAR,Seuil))
 
 ####使用关联规则####
-
-str(Data_AR)
-system.time(transaction_data <- as(lapply(Data_AR[1:5], "[[", 1), "transactions"))
-system.time(transaction_data <- as(split(Data_AR[1:5],as.character(c(1:16))), "transactions")) # original_data[,"id"], original_data[,"type"]
+# 使用arules包中的aprior或eclat算法均需要将数据转换为transactions型。
+# 一般使用as(object,"type")来做转换。
+# 而转换为transactions型时需先将数据转换为因子(factor)
+Data_Test<-Data_AR
+Data_Test<-data.frame(
+  Data_Test[,1]<-as.factor(Data_Test[,1]),
+  Data_Test[,2]<-as.factor(Data_Test[,2]),
+  Data_Test[,3]<-as.factor(Data_Test[,3]),
+  Data_Test[,4]<-as.factor(Data_Test[,4]),
+  Data_Test[,5]<-as.factor(Data_Test[,5])
+)
+names(Data_Test)<-c(paste("Attribut",c(1:5),sep=""))
+system.time(as(Data_Test , "transactions"))
 system.time(frequentsets<-eclat(transaction_data,parameter=list(support=0.05,maxlen=10))  )
-
 
