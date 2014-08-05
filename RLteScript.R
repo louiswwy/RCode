@@ -258,22 +258,22 @@ Data_Scaled<-data.frame(scale(Data_PreAnalyse))
 ###########K值选择#############
 #通过计算轮廓系数（silhouette coefficient）方法结合了凝聚度和分离度，可以以此来判断聚类的优良性。其值在-1到+1之间取值，值越大表示聚类效果越好。
 #########计算不同K值的SSE#####
-# system.time(resultSSE<-CalculeSSE(Data_Scaled))
-# 
-# ###########计算Silhouette Coefficient#######
-# system.time(resultSC<-CalculeSC(Data_Scaled))
-# 
-# # 绘制结果
-# plot(resultSSE, type="o", xlab="Number of Cluster", ylab="Sum of Squer Error")
-# 
-# plot(resultSC, type="o", xlab="Number of Cluster", ylab="Silhouette Coefficient")
-# # K=8时值最大，所以聚类效果最佳。
-# rm(resultSSE)
-# rm(resultSC)
+system.time(resultSSE<-CalculeSSE(Data_Scaled))
+
+###########计算Silhouette Coefficient#######
+system.time(resultSC<-CalculeSC(Data_Scaled))
+
+# 绘制结果
+plot(resultSSE, type="o", xlab="Number of Cluster", ylab="Sum of Squer Error")
+
+plot(resultSC, type="o", xlab="Number of Cluster", ylab="Silhouette Coefficient")
+# K=8时值最大，所以聚类效果最佳。
+rm(resultSSE)
+rm(resultSC)
 
 ###########聚类############
-#bcl<-bootFlexclust(newDat, k=2:15, nboot=50, FUN=cclust, multicore=FALSE)
-#######K-means############3
+#######K-means############
+# 使用效果相同但是速度更快的clara算法
 # pkm<-kmeans(Data_Scaled,8,nstart=25,iter.max=10,algorithm="Hartigan-Wong")
 # attach(Data_Scaled)
 # # plot3d(upAvBand,downAvBand,firstRespondTime,size=3,col=pkm$cluster)
@@ -286,24 +286,13 @@ Data_Scaled<-data.frame(scale(Data_PreAnalyse))
 kmC<-clara(Data_Scaled,8)
 kmC$clusinfo
 
-# # attach(Data_PreAnalyse)
-# # plot3d(upAvBand,downAvBand,firstRespondTime,size=3,col=kmC$clustering,xlim=c(0,200),ylim=c(0,200),zlim=c(0,200))
-# # plot3d(firstRespondTime,lastPacketTime,lastAckTime,size=3,col=kmC$clustering)
-# # detach(Data_PreAnalyse)
-clust<-data.frame(kmC$clustering)
-data_cluster<-data.frame(data_HTTP,clust)
+data_cluster<-data.frame(data_HTTP,data.frame(kmC$clustering))
 
-# # cluste2<-kmC$clustering==2
-# # data_cluste2<-data_cluster[cluste2,] 
-# # attach(data_cluste2)
-# # plot3d(upAvBand,downAvBand,firstRespondTime,size=3,col='blue')
-# # plot3d(firstRespondTime,lastPacketTime,lastAckTime,size=3,col=kmC$clustering)
-# # detach(data_cluste2)
 ###########long procedure############
-#merge data with same xdr id
-XdrCount<-itemCount(data_HTTP$xDRID)
-longxdr<-MoreFreqRow(XdrCount,2)
-LongData<-mergedata(longxdr)
+# merge data with same xdr id
+# XdrCount<-itemCount(data_HTTP$xDRID)
+# longxdr<-MoreFreqRow(XdrCount,2)
+# LongData<-mergedata(longxdr)
 
 ###########analyse data###################
 eNbCount<-itemCount(data_cluster$eNBip)
@@ -365,7 +354,11 @@ par(oldpar)#还原设置
 # 
 # #+RTS 
 # 
-data_PreAR<-data_cluster[c(77,78,79,80,81,82)]
+# data_cluster<-data.frame(data_cluster,row.names(data_cluster))
+
+data_PreAR<-data_cluster[c(77,78,79,80,81,82,12)]
+
+str(data_PreAR)
 #根据类划分数据。
 Data_ARule<-split(data_PreAR[1:5],data_PreAR[,6])
 #统计每个类的信息
@@ -401,7 +394,7 @@ qujian<-function(data,nk){
   return(TData)
 }
 
-system.time(Max_Min<-qujian(data_PreAR,8))
+system.time(Max_Min<-qujian(data_PreAR[1:5],8))
 #优化版
 qujian2<-function(data,nc){  
   TData<-c()
@@ -493,21 +486,70 @@ ToString<-function(data,seuil){
   return(data)
 }  
 
-system.time(Data_AR<-ToString(data_PreAR,Seuil))
+system.time(Data_AR<-ToString(data_PreAR[1:5],Seuil))
 
-####使用关联规则####
-# 使用arules包中的aprior或eclat算法均需要将数据转换为transactions型。
-# 一般使用as(object,"type")来做转换。
-# 而转换为transactions型时需先将数据转换为因子(factor)
-Data_Test<-Data_AR
-Data_Test<-data.frame(
-  Data_Test[,1]<-as.factor(Data_Test[,1]),
-  Data_Test[,2]<-as.factor(Data_Test[,2]),
-  Data_Test[,3]<-as.factor(Data_Test[,3]),
-  Data_Test[,4]<-as.factor(Data_Test[,4]),
-  Data_Test[,5]<-as.factor(Data_Test[,5])
+Data_AR2<-data.frame(Data_AR,data_PreAR[,7])
+names(Data_AR2)<-c('upAvBand','downAvBand','firstRespondTime','lastPacketTime','lastAckTime','item')
+
+#根据row.names，将eNbCount中的‘Freq’合并到Data_AR中
+# Data_AR2<-cbind(Data_AR2, eNbCount[, "Freq"][match(Data_AR2$eNbIp, eNbCount$item)])
+# Data_AR2<-cbind(Data_AR2,row.names(data_HTTP))
+# Data_AR2<-merge(Data_AR2,eNbCount,by="item",all=T)
+# 
+# Data_AR2<-data.frame(Data_AR2,c(1:nrow(Data_AR)))
+# names(Data_AR2)<-c('upAvBand'
+#                      ,'downAvBand','firstRespondTime','lastPacketTime'
+#                      ,'lastAckTime','eNbFreq','eNbIp','ID')
+# Data_AR2[3000,]
+# data_cluster[3000,12]
+# row.names(eNbCount[3000,])
+# FreqEnb<-function(data,Num){
+#   Notfreq<-(data$eNbFreq<=Num)
+#   data_Notfreq<-data[Notfreq,]
+#   data_Notfreq$eNbFreq<-'Less'
+#   
+#   freq<-(data$eNbFreq>Num)
+#   data_freq<-data[freq,]
+#   data_freq$eNbFreq<-'Many'
+#   
+#   TData<-rbind(data_Notfreq,data_freq)
+#   return(data_Notfreq)
+# }
+# Data_AR2<-FreqEnb(Data_AR2,1000)
+
+
+# Notfreq<-Data_AR$eNbFreq>1000
+# data_Notfreq<-Data_AR[Notfreq,]
+# data_Notfreq$eNbFreq<-'Many'
+# Data_AR$eNbFreq[3000]
+# 
+# ####使用关联规则####
+# # 使用arules包中的aprior或eclat算法均需要将数据转换为transactions型。
+# # 一般使用as(object,"type")来做转换。
+# # 而转换为transactions型时需先将数据转换为因子(factor)
+# # 转换前不要忘记载入arules包
+LteCode<-Data_AR2[,-6]
+LteCode<-data.frame(
+  
+  LteCode[,1]<-factor(LteCode[,1]),
+  LteCode[,2]<-factor(LteCode[,2]),
+  LteCode[,3]<-factor(LteCode[,3]),
+  LteCode[,4]<-factor(LteCode[,4]),
+  LteCode[,5]<-factor(LteCode[,5])
+  #   LteCode[,6]<-as.factor(LteCode[,6]),
+  #   LteCode[,8]<-as.factor(LteCode[,8])
 )
-names(Data_Test)<-c(paste("Attribut",c(1:5),sep=""))
-system.time(as(Data_Test , "transactions"))
-system.time(frequentsets<-eclat(transaction_data,parameter=list(support=0.05,maxlen=10))  )
 
+# names(LteCode)<-c(paste("Attribut",c(1:5),sep=""))#,"TransactionID ")  
+names(LteCode)<-c('upAvBand','downAvBand','firstRespondTime','lastPacketTime','lastAckTime')
+system.time(trans<-as(LteCode , "transactions"))
+summary(trans)
+# 以函数apriori中的缺省设置来查找数据集trans中的关联规则
+system.time(aRule<-apriori(trans))
+# 检查所返回的关联规则
+inspect(aRule)
+# eclat算法
+system.time(frequentsets<-eclat(trans,parameter=list(support=0.2,maxlen=10))  )
+
+inspect(frequentsets)
+# 
