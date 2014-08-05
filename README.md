@@ -11,7 +11,7 @@ RCode
 
 项目使用的技术包括： R（聚类，PCA，关联等算法）、 hadoop和mahout。
 
-
+http://www.dataguru.cn/portal.php?mod=view&aid=2835  挺有意思的一个R中的关联规则的例子
 另外开了新坑  git@github.com:louiswwy/R-Code.git   更新更及时。
 
 说的好像会有人看一样~
