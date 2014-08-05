@@ -10,3 +10,8 @@ RCode
 请将找到的，觉得有用的资料放在项目下的"资料-documentation"中。
 
 项目使用的技术包括： R（聚类，PCA，关联等算法）、 hadoop和mahout。
+
+
+另外开了新坑  git@github.com:louiswwy/R-Code.git   更新更及时。
+
+说的好像会有人看一样~
